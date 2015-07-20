@@ -8,6 +8,7 @@ __pycache__/
 # C extensions
 *.so
 
+.idea/*
 # Distribution / packaging
 .Python
 env/
@@ -72,3 +73,6 @@ pyvenv.cfg
 pip-selfcheck.json
 
 
+
+config.py
+foo.png
