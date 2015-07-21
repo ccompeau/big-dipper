@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytz
 import logging
 from sqlalchemy import func
+from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm.exc import NoResultFound
 from models import session, Messages, SQLAlchemyLogHandler
 import matplotlib.pyplot as plt
@@ -40,6 +41,10 @@ def run():
         logger.error('Twitter feed log: no results found for 5 minute moving average.')
         threading.Timer(60 * minutes, run).start()
         return
+    except DatabaseError:
+        logger.error('Twitter feed log: database error.')
+        threading.Timer(60 * minutes, run).start()
+        return
 
     try:
         last_five_minute_moving_average, = (session.query(func.avg(Messages.price))
@@ -50,6 +55,10 @@ def run():
         logger.error('Twitter feed log: no results found for last 5 minute moving average.')
         threading.Timer(60 * minutes, run).start()
         return
+    except DatabaseError:
+        logger.error('Twitter feed log: database error.')
+        threading.Timer(60 * minutes, run).start()
+        return
 
     try:
         twenty_four_hour_moving_average, = (session.query(func.avg(Messages.price))
@@ -58,6 +67,10 @@ def run():
                                            .group_by(Messages.type).one())
     except NoResultFound:
         logger.error('Twitter feed log: no results found for 24 hour moving average.')
+        threading.Timer(60 * minutes, run).start()
+        return
+    except DatabaseError:
+        logger.error('Twitter feed log: database error.')
         threading.Timer(60 * minutes, run).start()
         return
 
