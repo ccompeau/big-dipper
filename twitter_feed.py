@@ -60,7 +60,7 @@ def run():
                                    percent_change)
     print(tweet_text)
     logger.info(tweet_text)
-    if percent_change > 0.05:
+    if percent_change > 0.05 or percent_change < -0.05:
         price_series = (session.query(Messages.time, Messages.price, Messages.size)
                         .filter(Messages.type == "match")
                         .filter(Messages.time.op('AT TIME ZONE')('UTC').between(twenty_four_hours_ago, now))
