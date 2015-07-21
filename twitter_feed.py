@@ -28,6 +28,7 @@ def run():
     now = datetime.utcnow()
     utc.localize(now)
     five_minutes_ago = now - timedelta(minutes=5)
+    ten_minutes_ago = now - timedelta(minutes=10)
     twenty_four_hours_ago = now - timedelta(days=1)
 
     try:
@@ -41,6 +42,16 @@ def run():
         return
 
     try:
+        last_five_minute_moving_average, = (session.query(func.avg(Messages.price))
+                                      .filter(Messages.type == "match")
+                                      .filter(Messages.time.op('AT TIME ZONE')('UTC').between(ten_minutes_ago, five_minutes_ago))
+                                      .group_by(Messages.type).one())
+    except NoResultFound:
+        logger.error('Twitter feed log: no results found for last 5 minute moving average.')
+        threading.Timer(60 * minutes, run).start()
+        return
+
+    try:
         twenty_four_hour_moving_average, = (session.query(func.avg(Messages.price))
                                            .filter(Messages.type == "match")
                                            .filter(Messages.time.op('AT TIME ZONE')('UTC').between(twenty_four_hours_ago, now))
@@ -50,17 +61,17 @@ def run():
         threading.Timer(60 * minutes, run).start()
         return
 
-    change = five_minute_moving_average - twenty_four_hour_moving_average
-    percent_change = change / twenty_four_hour_moving_average
+    this_change = (five_minute_moving_average - twenty_four_hour_moving_average)/twenty_four_hour_moving_average
+    last_change = (last_five_minute_moving_average - twenty_four_hour_moving_average)/twenty_four_hour_moving_average
     tweet_text = "24 hour moving average: {1:.2f}\n" \
                  "5 min moving average: {0:.2f}\n" \
                  "Percent change: {2:.2%}\n" \
                  "#Bitcoin".format(five_minute_moving_average,
                                    twenty_four_hour_moving_average,
-                                   percent_change)
-    print(tweet_text)
+                                   this_change)
+
     logger.info(tweet_text)
-    if percent_change > 0.05 or percent_change < -0.05:
+    if (this_change > 0.05 or this_change < -0.05) and not (last_change > 0.05 or last_change < -0.05):
         price_series = (session.query(Messages.time, Messages.price, Messages.size)
                         .filter(Messages.type == "match")
                         .filter(Messages.time.op('AT TIME ZONE')('UTC').between(twenty_four_hours_ago, now))
