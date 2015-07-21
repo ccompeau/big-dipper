@@ -2,4 +2,6 @@ Steps for capturing Coinbase Exchange websocket data:
 
 1. createdb -U $USER --locale=en_US.utf-8 -E utf-8 -O $USER bigdipper -T template0
 2. python3 models.py
-3. python3 main.py
+Run the processes in the background:
+3. nohup python3 websocket_feed.py &
+4. nohup python3 twitter_feed.py &
