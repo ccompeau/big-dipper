@@ -1,10 +1,20 @@
 import asyncio
+import logging
 import pprint
 import websockets
 import json
-from models import Messages, session
+from models import Messages, session, SQLAlchemyLogHandler
 
 pp = pprint.PrettyPrinter(indent=4)
+
+logger = logging.getLogger('websocket_feed_log')
+
+handler = SQLAlchemyLogHandler()
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+
 
 @asyncio.coroutine
 def websocket_to_database():
@@ -12,16 +22,19 @@ def websocket_to_database():
     yield from websocket.send('{"type": "subscribe", "product_id": "BTC-USD"}')
     while True:
         message = yield from websocket.recv()
-        message = json.loads(message)
-        pp.pprint(message)
+        try:
+            message = json.loads(message)
+        except TypeError:
+            logger.error('JSON did not load, see ' + str(message))
+            continue
         new_message = Messages()
         new_message.json_doc = message
         for key in message:
             if hasattr(new_message, key):
                 setattr(new_message, key, message[key])
             else:
-                print(key)
-                raise Exception
+                logger.error(str(key) + ' is missing, see ' + str(message))
+                continue
         session.add(new_message)
         session.commit()
     yield from websocket.close()

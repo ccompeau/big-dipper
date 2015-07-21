@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine
+import logging
+import traceback
+from sqlalchemy import create_engine, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -36,6 +38,37 @@ class Messages(Base):
     json_doc = Column(JSONB, unique=True)
 
 
+class Log(Base):
+    __tablename__ = 'logs'
+    id = Column(Integer, primary_key=True)
+    logger = Column(String)
+    level = Column(String)
+    trace = Column(String)
+    msg = Column(String)
+    created_at = Column(DateTime(timezone=True), default=func.now().op('AT TIME ZONE')('UTC'))
+
+    def __unicode__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return "<Log: %s - %s>" % (self.created_at.strftime('%m/%d/%Y-%H:%M:%S'), self.msg[:50])
+
+
+class SQLAlchemyLogHandler(logging.Handler):
+    def emit(self, record):
+        log = Log()
+        log.logger = record.__dict__['name']
+        log.level = record.__dict__['levelname']
+        exc = record.__dict__['exc_info']
+        if exc:
+            log.trace = traceback.format_exc(exc)
+        else:
+            log.trace = None
+        log.msg = record.__dict__['msg']
+        session.add(log)
+        session.commit()
+
+
 if __name__ == "__main__":
-    Base.metadata.drop_all(bind=engine)
+    # Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
