@@ -1,14 +1,16 @@
 import threading
 from datetime import datetime, timedelta
-import pytz
 import logging
+
+import pytz
 from sqlalchemy import func
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm.exc import NoResultFound
-from models import session, Messages, SQLAlchemyLogHandler
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+from matplotlib import pyplot, dates
+
 from twython import Twython
+
+from models import session, Messages, SQLAlchemyLogHandler
 from config import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
 
 twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
@@ -21,9 +23,9 @@ logger = logging.getLogger('twitter_feed_log')
 
 handler = SQLAlchemyLogHandler()
 handler.setLevel(logging.INFO)
+
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
-
 
 def run():
     now = datetime.utcnow()
@@ -90,17 +92,17 @@ def run():
                         .filter(Messages.time.op('AT TIME ZONE')('UTC').between(twenty_four_hours_ago, now))
                         .order_by(Messages.time)
                         .all())
-        fig, ax = plt.subplots()
+        fig, ax = pyplot.subplots()
         time, price, volume = zip(*price_series)
         ax.plot(time, price)
-        ax.xaxis.set_major_locator(mdates.HourLocator())
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H'))
-        ax.xaxis.set_minor_locator(mdates.MinuteLocator())
-        plt.gcf().autofmt_xdate()
-        ax.format_xdata = mdates.DateFormatter('%H')
-        plt.subplots_adjust(left=0.1, right=0.9, bottom=0.3, top=0.9)
-        plt.savefig('foo.png')
-        plt.close()
+        ax.xaxis.set_major_locator(dates.HourLocator())
+        ax.xaxis.set_major_formatter(dates.DateFormatter('%H'))
+        ax.xaxis.set_minor_locator(dates.MinuteLocator())
+        pyplot.gcf().autofmt_xdate()
+        ax.format_xdata = dates.DateFormatter('%H')
+        pyplot.subplots_adjust(left=0.1, right=0.9, bottom=0.3, top=0.9)
+        pyplot.savefig('foo.png')
+        pyplot.close()
         photo = open('foo.png', 'rb')
         response = twitter.upload_media(media=photo)
         twitter.update_status(status=tweet_text, media_ids=[response['media_id']])

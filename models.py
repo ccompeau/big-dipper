@@ -5,10 +5,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, DateTime, Integer, Numeric, String
-from urllib.parse import quote
-from config import DB_PASSWORD
 
-engine = create_engine("postgresql://pierre:%s@localhost/bigdipper" % quote(DB_PASSWORD))
+from config import SQLALCHEMY_DATABASE_URI
+
+engine = create_engine(SQLALCHEMY_DATABASE_URI)
 
 session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
@@ -16,7 +16,7 @@ Base = declarative_base()
 Base.query = session.query_property()
 
 class Messages(Base):
-    __tablename__ = 'messages'
+    __tablename__ = 'coinbase_messages'
 
     sequence = Column(Integer, primary_key=True)
     type = Column(String)
@@ -45,7 +45,7 @@ class Log(Base):
     level = Column(String)
     trace = Column(String)
     msg = Column(String)
-    created_at = Column(DateTime(timezone=True), default=func.now().op('AT TIME ZONE')('UTC'))
+    created_at = Column(DateTime(timezone=True), default=func.now())
 
     def __unicode__(self):
         return self.__repr__()

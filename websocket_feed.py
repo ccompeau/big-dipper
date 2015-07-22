@@ -1,8 +1,10 @@
 import asyncio
 import logging
 import pprint
-import websockets
 import json
+
+import websockets
+
 from models import Messages, session, SQLAlchemyLogHandler
 
 pp = pprint.PrettyPrinter(indent=4)
