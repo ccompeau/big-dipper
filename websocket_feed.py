@@ -2,6 +2,7 @@ import asyncio
 import logging
 import pprint
 import json
+from sqlalchemy.exc import IntegrityError
 
 import websockets
 
@@ -37,8 +38,11 @@ def websocket_to_database():
             else:
                 logger.error(str(key) + ' is missing, see ' + str(message))
                 continue
-        session.add(new_message)
-        session.commit()
+        try:
+            session.add(new_message)
+            session.commit()
+        except IntegrityError:
+            session.rollback()
     yield from websocket.close()
 
 if __name__ == '__main__':
