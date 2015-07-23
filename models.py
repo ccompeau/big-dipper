@@ -2,6 +2,7 @@ import logging
 import traceback
 from sqlalchemy import create_engine, func
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, DateTime, Integer, Numeric, String
@@ -65,9 +66,11 @@ class SQLAlchemyLogHandler(logging.Handler):
         else:
             log.trace = None
         log.msg = record.__dict__['msg']
-        session.add(log)
-        session.commit()
-
+        try:
+            session.add(log)
+            session.commit()
+        except DatabaseError:
+            session.rollback()
 
 if __name__ == "__main__":
     # Base.metadata.drop_all(bind=engine)
