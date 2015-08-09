@@ -31,6 +31,8 @@ class Messages(Base):
     trade_id = Column(Integer)
     funds = Column(Numeric)
     size = Column(Numeric)
+    new_size = Column(Numeric)
+    old_size = Column(Numeric)
     remaining_size = Column(Numeric)
     price = Column(Numeric)
     side = Column(String)
