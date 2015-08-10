@@ -38,7 +38,6 @@ class Messages(Base):
     side = Column(String)
     order_type = Column(String)
     client_oid = Column(String)
-    json_doc = Column(JSONB, unique=True)
 
 
 class Log(Base):

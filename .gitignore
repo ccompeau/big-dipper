@@ -77,3 +77,6 @@ pip-selfcheck.json
 config.py
 foo.png
 trading.py
+fabfile.py
+deploy.py
+deploy.log
