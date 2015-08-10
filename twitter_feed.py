@@ -44,7 +44,8 @@ def run():
         threading.Timer(60 * minutes, run).start()
         return
     except DatabaseError:
-        logger.error('Twitter feed log: database error.')
+        # TODO add text log for database errors
+        # logger.error('Twitter feed log: database error.')
         threading.Timer(60 * minutes, run).start()
         return
 
@@ -58,7 +59,7 @@ def run():
         threading.Timer(60 * minutes, run).start()
         return
     except DatabaseError:
-        logger.error('Twitter feed log: database error.')
+        # logger.error('Twitter feed log: database error.')
         threading.Timer(60 * minutes, run).start()
         return
 
@@ -72,7 +73,7 @@ def run():
         threading.Timer(60 * minutes, run).start()
         return
     except DatabaseError:
-        logger.error('Twitter feed log: database error.')
+        # logger.error('Twitter feed log: database error.')
         threading.Timer(60 * minutes, run).start()
         return
 
@@ -87,11 +88,15 @@ def run():
 
     logger.info(tweet_text)
     if (this_change > 0.05 or this_change < -0.05) and not (last_change > 0.05 or last_change < -0.05):
-        price_series = (session.query(Messages.time, Messages.price, Messages.size)
-                        .filter(Messages.type == "match")
-                        .filter(Messages.time.op('AT TIME ZONE')('UTC').between(twenty_four_hours_ago, now))
-                        .order_by(Messages.time)
-                        .all())
+        try:
+            price_series = (session.query(Messages.time, Messages.price, Messages.size)
+                            .filter(Messages.type == "match")
+                            .filter(Messages.time.op('AT TIME ZONE')('UTC').between(twenty_four_hours_ago, now))
+                            .order_by(Messages.time)
+                            .all())
+        except DatabaseError:
+            threading.Timer(60 * minutes, run).start()
+            return
         fig, ax = pyplot.subplots()
         time, price, volume = zip(*price_series)
         ax.plot(time, price)
