@@ -31,7 +31,6 @@ def websocket_to_database():
             logger.error('JSON did not load, see ' + str(message))
             continue
         new_message = Messages()
-        new_message.json_doc = message
         for key in message:
             if hasattr(new_message, key):
                 setattr(new_message, key, message[key])
