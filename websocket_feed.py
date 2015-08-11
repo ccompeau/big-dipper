@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from logging.handlers import RotatingFileHandler
 import pprint
 import json
 from sqlalchemy.exc import IntegrityError, DatabaseError
@@ -10,13 +11,18 @@ from models import Messages, session, SQLAlchemyLogHandler
 
 pp = pprint.PrettyPrinter(indent=4)
 
-logger = logging.getLogger('websocket_feed_log')
+db_logger = logging.getLogger('websocket_feed_log')
+file_logger = logging.getLogger('database_csv')
 
-handler = SQLAlchemyLogHandler()
-handler.setLevel(logging.INFO)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+db_handler = SQLAlchemyLogHandler()
+db_handler.setLevel(logging.INFO)
+db_logger.addHandler(db_handler)
+db_logger.setLevel(logging.INFO)
 
+file_handler = RotatingFileHandler('database_log.csv', 'a', 10 * 1024 * 1024, 100)
+file_handler.setFormatter(logging.Formatter('%(asctime)s, %(levelname)s, %(message)s'))
+file_handler.setLevel(logging.INFO)
+file_logger.addHandler(file_handler)
 
 
 @asyncio.coroutine
@@ -28,19 +34,23 @@ def websocket_to_database():
         try:
             message = json.loads(message)
         except TypeError:
-            logger.error('JSON did not load, see ' + str(message))
+            db_logger.error('JSON did not load, see ' + str(message))
             continue
         new_message = Messages()
         for key in message:
             if hasattr(new_message, key):
                 setattr(new_message, key, message[key])
             else:
-                logger.error(str(key) + ' is missing, see ' + str(message))
+                db_logger.error(str(key) + ' is missing, see ' + str(message))
                 continue
         try:
             session.add(new_message)
             session.commit()
-        except (IntegrityError, DatabaseError):
+        except IntegrityError:
+            db_logger.error('Integrity error, see ' + str(message))
+            session.rollback()
+        except DatabaseError:
+            file_logger.error('Database Error')
             session.rollback()
     yield from websocket.close()
 
