@@ -2,7 +2,7 @@ import asyncio
 import logging
 import pprint
 import json
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DatabaseError
 
 import websockets
 
@@ -40,7 +40,7 @@ def websocket_to_database():
         try:
             session.add(new_message)
             session.commit()
-        except IntegrityError:
+        except (IntegrityError, DatabaseError):
             session.rollback()
     yield from websocket.close()
 
