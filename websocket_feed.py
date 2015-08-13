@@ -24,6 +24,9 @@ file_handler.setFormatter(logging.Formatter('%(asctime)s, %(levelname)s, %(messa
 file_handler.setLevel(logging.INFO)
 file_logger.addHandler(file_handler)
 
+websocket_logger = logging.getLogger('websockets')
+websocket_logger.addHandler(db_handler)
+websocket_logger.setLevel(logging.INFO)
 
 @asyncio.coroutine
 def websocket_to_database():
@@ -31,6 +34,8 @@ def websocket_to_database():
     yield from websocket.send('{"type": "subscribe", "product_id": "BTC-USD"}')
     while True:
         message = yield from websocket.recv()
+        if message is None:
+            break
         try:
             message = json.loads(message)
         except TypeError:
@@ -52,7 +57,7 @@ def websocket_to_database():
         except DatabaseError:
             file_logger.error('Database Error')
             session.rollback()
-    yield from websocket.close()
+
 
 if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(websocket_to_database())
