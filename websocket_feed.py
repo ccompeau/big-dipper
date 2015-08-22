@@ -35,6 +35,7 @@ def websocket_to_database():
     while True:
         message = yield from websocket.recv()
         if message is None:
+            file_logger.error('Websocket message is None!')
             break
         try:
             message = json.loads(message)
