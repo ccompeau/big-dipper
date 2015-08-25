@@ -3,7 +3,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 import pprint
 import json
+import random
 from sqlalchemy.exc import IntegrityError, DatabaseError
+import time
 
 import websockets
 
@@ -63,5 +65,10 @@ def websocket_to_database():
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
+    n = 0
     while True:
+        n += 1
+        time.sleep((2 ** n) + (random.randint(0, 1000) / 1000))
         loop.run_until_complete(websocket_to_database())
+        if n > 6:
+            n = 0
