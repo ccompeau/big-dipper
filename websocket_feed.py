@@ -6,7 +6,7 @@ import json
 import random
 from sqlalchemy.exc import IntegrityError, DatabaseError
 import time
-
+from socket import gaierror
 import websockets
 
 from models import Messages, session, SQLAlchemyLogHandler
@@ -33,7 +33,11 @@ websocket_logger.setLevel(logging.INFO)
 
 @asyncio.coroutine
 def websocket_to_database():
-    websocket = yield from websockets.connect("wss://ws-feed.exchange.coinbase.com")
+    try:
+        websocket = yield from websockets.connect("wss://ws-feed.exchange.coinbase.com")
+    except gaierror:
+        db_logger.error('socket.gaierror - had a problem connecting to Coinbase feed')
+        return
     yield from websocket.send('{"type": "subscribe", "product_id": "BTC-USD"}')
     while True:
         message = yield from websocket.recv()
@@ -67,8 +71,10 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     n = 0
     while True:
-        n += 1
-        time.sleep((2 ** n) + (random.randint(0, 1000) / 1000))
         loop.run_until_complete(websocket_to_database())
+        n += 1
         if n > 6:
             n = 0
+        sleep_time = (2 ** n) + (random.randint(0, 1000) / 1000)
+        db_logger.error('Websocket connectivity problem, going to sleep for {0}'.format(sleep_time))
+        time.sleep(sleep_time)
