@@ -60,7 +60,6 @@ def websocket_to_database():
             session.add(new_message)
             session.commit()
         except IntegrityError:
-            db_logger.error('Integrity error, see ' + str(message))
             session.rollback()
         except DatabaseError:
             file_logger.error('Database Error')
