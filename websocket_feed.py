@@ -28,6 +28,7 @@ websocket_logger = logging.getLogger('websockets')
 websocket_logger.addHandler(db_handler)
 websocket_logger.setLevel(logging.INFO)
 
+
 @asyncio.coroutine
 def websocket_to_database():
     websocket = yield from websockets.connect("wss://ws-feed.exchange.coinbase.com")
@@ -61,4 +62,6 @@ def websocket_to_database():
 
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(websocket_to_database())
+    loop = asyncio.get_event_loop()
+    while True:
+        loop.run_until_complete(websocket_to_database())
