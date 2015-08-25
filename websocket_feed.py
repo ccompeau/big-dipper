@@ -70,10 +70,14 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     n = 0
     while True:
+        start_time = loop.time()
         loop.run_until_complete(websocket_to_database())
-        n += 1
-        if n > 6:
-            n = 0
-        sleep_time = (2 ** n) + (random.randint(0, 1000) / 1000)
-        db_logger.error('Websocket connectivity problem, going to sleep for {0}'.format(sleep_time))
-        time.sleep(sleep_time)
+        end_time = loop.time()
+        seconds = end_time - start_time
+        if seconds < 2:
+            n += 1
+            sleep_time = (2 ** n) + (random.randint(0, 1000) / 1000)
+            db_logger.error('Websocket connectivity problem, going to sleep for {0}'.format(sleep_time))
+            time.sleep(sleep_time)
+            if n > 6:
+                n = 0
