@@ -49,6 +49,8 @@ def websocket_to_database():
         except TypeError:
             db_logger.error('JSON did not load, see ' + str(message))
             continue
+        if message['type'] != 'match':
+            continue
         new_message = Messages()
         for key in message:
             if hasattr(new_message, key):
