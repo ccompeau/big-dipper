@@ -30,6 +30,8 @@ class Messages(Base):
     reason = Column(String)
     trade_id = Column(Integer)
     funds = Column(Numeric)
+    old_funds = Column(Numeric)
+    new_funds = Column(Numeric)
     size = Column(Numeric)
     new_size = Column(Numeric)
     old_size = Column(Numeric)
